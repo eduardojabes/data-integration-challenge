@@ -12,14 +12,16 @@ import (
 
 type CompanyRepository interface {
 	AddCompany(ctx context.Context, company entity.Companies) error
-	ReadCompany(ctx context.Context, name string) (*entity.Companies, error)
+	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
 	GetCompany(ctx context.Context) ([]*entity.Companies, error)
+	UpdateCompany(ctx context.Context, company entity.Companies) error
 }
 
 type CompanyModel struct {
-	CompanyID    uuid.UUID `db:"cc_company_id"`
-	ComapanyName string    `db:"cc_name"`
-	CompanyZIP   string    `db:"cc_zip"`
+	CompanyID      uuid.UUID `db:"cc_company_id"`
+	ComapanyName   string    `db:"cc_name"`
+	CompanyZIP     string    `db:"cc_zip"`
+	CompanyWebSite string    `db:"cc_website"`
 }
 
 type PostgreCompanyRepository struct {
@@ -43,7 +45,7 @@ func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entit
 	return nil
 }
 
-func (r *PostgreCompanyRepository) ReadCompany(ctx context.Context, name string) (*entity.Companies, error) {
+func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
 	var company []*CompanyModel
 	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM companies_catalog_table WHERE cc_name = $1`, name)
 	if err != nil {
@@ -59,6 +61,14 @@ func (r *PostgreCompanyRepository) ReadCompany(ctx context.Context, name string)
 		Name: company[0].ComapanyName,
 		Zip:  company[0].CompanyZIP,
 	}, nil
+}
+
+func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
+	_, err := r.conn.Exec(ctx, `UPDATE companies_catalog_table SET cc_name = $2, cc_zip = $3,  cc_website = $4 WHERE cc_company_id = $1`, company.ID, company.Name, company.Zip, company.Website)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *PostgreCompanyRepository) GetCompany(ctx context.Context) ([]*entity.Companies, error) {

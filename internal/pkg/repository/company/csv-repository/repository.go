@@ -12,8 +12,9 @@ import (
 
 type CompanyRepository interface {
 	AddCompany(ctx context.Context, company entity.Companies) error
-	ReadCompany(ctx context.Context, name string) (*entity.Companies, error)
+	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
 	GetCompany(ctx context.Context) ([]*entity.Companies, error)
+	UpdateCompany(ctx context.Context, company entity.Companies) error
 }
 
 type CompanyCSVRepository struct{}
@@ -66,13 +67,21 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Co
 }
 
 func (ccCSV *CompanyCSVRepository) WriteCompany(ctx context.Context, company []entity.Companies) error {
+	//To be implemented
 	return nil
 }
 
 func (ccCSV *CompanyCSVRepository) AddCompany(ctx context.Context, company entity.Companies) error {
+	//To be implemented
 	return nil
 }
 
-func (ccCSV *CompanyCSVRepository) ReadCompany(ctx context.Context, name string) (*entity.Companies, error) {
+func (ccCSV *CompanyCSVRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
+	//To be implemented
 	return nil, nil
+}
+
+func (ccCSV *CompanyCSVRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
+	//To be implemented
+	return nil
 }
