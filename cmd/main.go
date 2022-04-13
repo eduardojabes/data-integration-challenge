@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os/signal"
 	"syscall"
 
-	company "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/postgreSQL"
+	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
+	dbRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/postgreSQL"
 	companyService "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 	routes "github.com/eduardojabes/data-integration-challenge/module/features/routes/company"
 	"github.com/jackc/pgx/v4"
@@ -26,27 +28,35 @@ func main() {
 		log.Fatalf("Unable to connect to database: %v\n", err)
 	}
 
-	repository := company.NewPostgreCompanyRepository(conn)
-	companyService := companyService.NewCompanyService(repository)
+	dbRepository := dbRepository.NewPostgreCompanyRepository(conn)
+	csvRepository := csvRepository.NewCompanyCSVRepository()
+	companyService := companyService.NewCompanyService(dbRepository, csvRepository)
 
 	httpConector := routes.NewConnector()
 	httpConector.ImplementConnector(*companyService)
 
-	path := "/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv"
+	path := "./data/q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
 
-	path = "/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q2_clientData.csv"
-	companyService.UpdateDataBase(ctx, path)
+	//path = "./data/q2_clientData.csv"
+	//companyService.UpdateDataBase(ctx, path)
 
-	//router := httpConector.NewRouter()
+	router := httpConector.NewRouter()
 
 	log.Print("The server has started")
-	//log.Fatal(http.ListenAndServe(":5000", router))
+	server := &http.Server{Addr: ":8080", Handler: router}
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			server.Close()
+			log.Print("The server has been closed due an error")
+		}
+	}()
 
 	<-ctx.Done()
 
+	log.Print("The server has been closed")
 	shutdownCtx := context.Background()
-
 	err = conn.Close(shutdownCtx)
 	if err != nil {
 		panic(err)

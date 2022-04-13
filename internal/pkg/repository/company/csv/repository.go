@@ -10,15 +10,6 @@ import (
 	"github.com/eduardojabes/data-integration-challenge/entity"
 )
 
-type CompanyRepositoryBasicOperations interface {
-	AddCompany(ctx context.Context, company entity.Companies) error
-	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
-	UpdateCompany(ctx context.Context, company entity.Companies) error
-}
-type CompanyRepositoryImplementation interface {
-	GetCompany(ctx context.Context, key string) ([]*entity.Companies, error)
-}
-
 type CompanyCSVRepository struct{}
 
 func NewCompanyCSVRepository() *CompanyCSVRepository {
@@ -51,7 +42,7 @@ func CreateCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entit
 }
 
 func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
-	f, err := os.Open("/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv")
+	f, err := os.Open(key)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err

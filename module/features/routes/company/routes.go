@@ -3,7 +3,7 @@ package company
 import (
 	"net/http"
 
-	CompanyConnector "github.com/eduardojabes/data-integration-challenge/internal/pkg/connectors/company"
+	CompanyConnector "github.com/eduardojabes/data-integration-challenge/internal/pkg/handler/company"
 	companyService "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 )
 
@@ -34,7 +34,7 @@ func (c *Connector) AddRoutesToConnector() {
 		Route{
 			"MergeCompany",
 			"POST",
-			"/REST-API/companies/merge-all-companies",
+			"/v1/companies/merge-all-companies",
 			c.connector.MergeCompanies,
 		},
 	}

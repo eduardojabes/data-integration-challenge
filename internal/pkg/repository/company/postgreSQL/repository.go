@@ -10,15 +10,6 @@ import (
 	"github.com/jackc/pgconn"
 )
 
-type CompanyRepositoryBasicOperations interface {
-	AddCompany(ctx context.Context, company entity.Companies) error
-	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
-	UpdateCompany(ctx context.Context, company entity.Companies) error
-}
-type CompanyRepositoryImplementation interface {
-	GetCompany(ctx context.Context, key string) ([]*entity.Companies, error)
-}
-
 type CompanyModel struct {
 	CompanyID      uuid.UUID `db:"cc_company_id"`
 	ComapanyName   string    `db:"cc_name"`
