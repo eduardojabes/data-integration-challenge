@@ -5,7 +5,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=data-integration-chalenge
+      - POSTGRES_DB=data-integration-challenge
     ports:
       - '5432:5432'
     networks:

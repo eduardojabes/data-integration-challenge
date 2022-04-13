@@ -1,7 +1,7 @@
 #Challenge Makefile
 .PHONY: migrate
 migrate: 
-	goose -dir deployment/migrations postgres "user=postgres password=postgres dbname=data-integration-chalenge sslmode=disable" up
+	goose -dir deployment/migrations postgres "user=postgres password=postgres dbname=data-integration-challenge sslmode=disable" up
 
 start:
 #TODO: commands necessary to start the API
