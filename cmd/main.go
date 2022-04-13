@@ -3,11 +3,10 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 	"os/signal"
 	"syscall"
 
-	company "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/postgreSQL-repository"
+	company "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/postgreSQL"
 	companyService "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 	routes "github.com/eduardojabes/data-integration-challenge/module/features/routes/company"
 	"github.com/jackc/pgx/v4"
@@ -30,11 +29,19 @@ func main() {
 	repository := company.NewPostgreCompanyRepository(conn)
 	companyService := companyService.NewCompanyService(repository)
 
-	companyService.InitializeDataBase(ctx)
+	httpConector := routes.NewConnector()
+	httpConector.ImplementConnector(*companyService)
 
-	router := routes.NewRouter()
+	path := "/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv"
+	companyService.InitializeDataBase(ctx, path)
+
+	path = "/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q2_clientData.csv"
+	companyService.UpdateDataBase(ctx, path)
+
+	//router := httpConector.NewRouter()
+
 	log.Print("The server has started")
-	log.Fatal(http.ListenAndServe(":5000", router))
+	//log.Fatal(http.ListenAndServe(":5000", router))
 
 	<-ctx.Done()
 

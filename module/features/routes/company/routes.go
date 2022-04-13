@@ -4,22 +4,43 @@ import (
 	"net/http"
 
 	CompanyConnector "github.com/eduardojabes/data-integration-challenge/internal/pkg/connectors/company"
+	companyService "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 )
 
 type Route struct {
 	Name        string
 	Method      string
+	Pattern     string
 	HandlerFunc http.HandlerFunc
 }
 
-var connector = CompanyConnector.NewCompanyConnector()
+//var connector = CompanyConnector.NewCompanyConnector()
 
 type Routes []Route
 
-var hook = Routes{
-	Route{
-		"MergeCompany",
-		"POST",
-		connector.MergeCompanies,
-	},
+type Connector struct {
+	connector CompanyConnector.CompanyConnector
+	route     Routes
+}
+
+func NewConnector() *Connector {
+	return &Connector{
+		connector: *CompanyConnector.NewCompanyConnector(),
+	}
+}
+
+func (c *Connector) AddRoutesToConnector() {
+	c.route = Routes{
+		Route{
+			"MergeCompany",
+			"POST",
+			"/REST-API/companies/merge-all-companies",
+			c.connector.MergeCompanies,
+		},
+	}
+}
+
+func (c *Connector) ImplementConnector(service companyService.CompanyService) {
+	c.connector.Register(service)
+	c.AddRoutesToConnector()
 }

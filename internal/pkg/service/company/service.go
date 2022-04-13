@@ -8,15 +8,22 @@ import (
 	"strings"
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
-	csvrepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv-repository"
+	csvrepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
 	"github.com/google/uuid"
 )
 
-type CompanyRepository interface {
+type CompanyRepositoryBasicOperations interface {
 	AddCompany(ctx context.Context, company entity.Companies) error
 	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
-	GetCompany(ctx context.Context) ([]*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company entity.Companies) error
+}
+type CompanyRepositoryImplementation interface {
+	GetCompany(ctx context.Context, key string) ([]*entity.Companies, error)
+}
+
+type CompanyRepository interface {
+	CompanyRepositoryBasicOperations
+	CompanyRepositoryImplementation
 }
 
 type CompanyService struct {
@@ -56,8 +63,8 @@ func CheckWebsiteValidity(website string) bool {
 	return ok
 }
 
-func (s *CompanyService) InitializeDataBase(ctx context.Context) error {
-	companies, err := s.repository.GetCompany(ctx)
+func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) error {
+	companies, err := s.repository.GetCompany(ctx, key)
 	if err != nil {
 		err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
 		return err
@@ -67,7 +74,7 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context) error {
 		oldrepository := s.repository
 
 		AlterCompanyRepository(s, csvrepository.NewCompanyCSVRepository())
-		companies, err := s.repository.GetCompany(ctx)
+		companies, err := s.repository.GetCompany(ctx, key)
 		if err != nil {
 			err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
 			return err
@@ -100,6 +107,24 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context) error {
 			}
 		}
 	}
+	return nil
+}
+
+func (s *CompanyService) UpdateDataBase(ctx context.Context, key string) error {
+	oldrepository := s.repository
+	AlterCompanyRepository(s, csvrepository.NewCompanyCSVRepository())
+	companies, err := s.repository.GetCompany(ctx, key)
+	if err != nil {
+		err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
+		return err
+	}
+
+	AlterCompanyRepository(s, oldrepository)
+
+	for _, company := range companies {
+		s.UpdateCompany(ctx, company)
+	}
+
 	return nil
 }
 
@@ -145,7 +170,8 @@ func (s *CompanyService) AddCompany(ctx context.Context, company *entity.Compani
 func (s *CompanyService) UpdateCompany(ctx context.Context, company *entity.Companies) error {
 	company.Name = strings.ToUpper(company.Name)
 
-	readCompany, err := s.repository.ReadCompanyByName(ctx, strings.ToUpper(company.Name))
+	readCompany, err := s.repository.ReadCompanyByName(ctx, company.Name)
+	//fmt.Printf("ID: %v, Name %v \n", readCompany.ID, readCompany.Name)
 	if err != nil {
 		err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
 		return err
@@ -155,12 +181,12 @@ func (s *CompanyService) UpdateCompany(ctx context.Context, company *entity.Comp
 		return ERR_COMPANY_NOT_EXISTS
 	}
 
+	company.ID = readCompany.ID
+
 	ok, err := CheckAllValidity(company)
 	if !ok {
 		return err
 	}
-
-	company.ID = readCompany.ID
 
 	err = s.repository.UpdateCompany(ctx, *company)
 

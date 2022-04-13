@@ -7,21 +7,30 @@ import (
 	"log"
 	"net/http"
 
-	csvrepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv-repository"
+	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
 	service "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
+	"github.com/google/uuid"
 )
+
+type Companies struct {
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Zip     string    `json:"zipCode"`
+	Website string    `json:"website"`
+}
 
 type CompanyConnector struct {
 	service service.CompanyService
 }
 
 func NewCompanyConnector() *CompanyConnector {
-	return &CompanyConnector{service: *service.NewCompanyService()}
+	return &CompanyConnector{}
 }
 
 func (c *CompanyConnector) Register(service service.CompanyService) {
 	c.service = service
 }
+
 func (c *CompanyConnector) MergeCompanies(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 
@@ -48,7 +57,7 @@ func (c *CompanyConnector) MergeCompanies(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	companyData := csvrepository.CreateCompanyEntityByCSV(ctx, data)
+	companyData := csvRepository.CreateCompanyEntityByCSV(ctx, data)
 	for _, company := range companyData {
 		err = c.service.UpdateCompany(ctx, company)
 		if err != nil {

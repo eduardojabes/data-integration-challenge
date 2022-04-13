@@ -10,11 +10,13 @@ import (
 	"github.com/eduardojabes/data-integration-challenge/entity"
 )
 
-type CompanyRepository interface {
+type CompanyRepositoryBasicOperations interface {
 	AddCompany(ctx context.Context, company entity.Companies) error
 	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
-	GetCompany(ctx context.Context) ([]*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company entity.Companies) error
+}
+type CompanyRepositoryImplementation interface {
+	GetCompany(ctx context.Context, key string) ([]*entity.Companies, error)
 }
 
 type CompanyCSVRepository struct{}
@@ -48,7 +50,7 @@ func CreateCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entit
 	return companyData
 }
 
-func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Companies, error) {
+func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	f, err := os.Open("/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv")
 	if err != nil {
 		log.Fatal(err)
@@ -71,22 +73,12 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Co
 	return companyData, nil
 }
 
-func (ccCSV *CompanyCSVRepository) WriteCompany(ctx context.Context, company []entity.Companies) error {
-	//To be implemented
-	return nil
-}
-
 func (ccCSV *CompanyCSVRepository) AddCompany(ctx context.Context, company entity.Companies) error {
-	//To be implemented
 	return nil
 }
-
 func (ccCSV *CompanyCSVRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
-	//To be implemented
 	return nil, nil
 }
-
 func (ccCSV *CompanyCSVRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
-	//To be implemented
 	return nil
 }
