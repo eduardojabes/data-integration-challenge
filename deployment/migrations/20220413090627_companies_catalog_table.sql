@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS companies_catalog_table (
     cc_zip VARCHAR(5),
     cc_website TEXT
 );
+
+ALTER TABLE IF EXISTS companies_catalog_table ADD cc_website TEXT;
 -- +goose StatementEnd
 
 -- +goose Down
