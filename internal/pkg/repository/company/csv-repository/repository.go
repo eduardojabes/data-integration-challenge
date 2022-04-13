@@ -3,7 +3,6 @@ package company
 import (
 	"context"
 	"encoding/csv"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -12,9 +11,10 @@ import (
 )
 
 type CompanyRepository interface {
-	AddCompany(ctx context.Context, company entity.Company) error
-	ReadCompany(ctx context.Context, name string) (*entity.Company, error)
-	GetCompany(ctx context.Context) ([]*entity.Company, error)
+	AddCompany(ctx context.Context, company entity.Companies) error
+	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
+	GetCompany(ctx context.Context) ([]*entity.Companies, error)
+	UpdateCompany(ctx context.Context, company entity.Companies) error
 }
 
 type CompanyCSVRepository struct{}
@@ -23,12 +23,12 @@ func NewCompanyCSVRepository() *CompanyCSVRepository {
 	return &CompanyCSVRepository{}
 }
 
-func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entity.Company {
-	var companyData []*entity.Company
+func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entity.Companies {
+	var companyData []*entity.Companies
 
 	for i, line := range fileData {
 		if i > 0 {
-			lineRead := &entity.Company{}
+			lineRead := &entity.Companies{}
 
 			for j, field := range line {
 				if j == 0 {
@@ -37,19 +37,13 @@ func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entit
 					lineRead.Zip = field
 				}
 			}
-
-			if len(lineRead.Name) > 0 && len(lineRead.Zip) == 5 {
-				companyData = append(companyData, lineRead)
-				fmt.Printf("Company: %s, zip:%s\n", lineRead.Name, lineRead.Zip)
-			} else {
-				fmt.Printf("Warning! There is some data inconsistence while importing from CSV. Check Company: %s, zip:%s\n", lineRead.Name, lineRead.Zip)
-			}
+			companyData = append(companyData, lineRead)
 		}
 	}
 	return companyData
 }
 
-func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Company, error) {
+func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Companies, error) {
 	f, err := os.Open("/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv")
 	if err != nil {
 		log.Fatal(err)
@@ -72,14 +66,22 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Co
 	return companyData, nil
 }
 
-func (ccCSV *CompanyCSVRepository) WriteCompany(ctx context.Context, company []entity.Company) error {
+func (ccCSV *CompanyCSVRepository) WriteCompany(ctx context.Context, company []entity.Companies) error {
+	//To be implemented
 	return nil
 }
 
-func (ccCSV *CompanyCSVRepository) AddCompany(ctx context.Context, company entity.Company) error {
+func (ccCSV *CompanyCSVRepository) AddCompany(ctx context.Context, company entity.Companies) error {
+	//To be implemented
 	return nil
 }
 
-func (ccCSV *CompanyCSVRepository) ReadCompany(ctx context.Context, name string) (*entity.Company, error) {
+func (ccCSV *CompanyCSVRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
+	//To be implemented
 	return nil, nil
+}
+
+func (ccCSV *CompanyCSVRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
+	//To be implemented
+	return nil
 }
