@@ -10,13 +10,6 @@ import (
 	"github.com/jackc/pgconn"
 )
 
-type CompanyRepository interface {
-	AddCompany(ctx context.Context, company entity.Companies) error
-	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
-	GetCompany(ctx context.Context) ([]*entity.Companies, error)
-	UpdateCompany(ctx context.Context, company entity.Companies) error
-}
-
 type CompanyModel struct {
 	CompanyID      uuid.UUID `db:"cc_company_id"`
 	ComapanyName   string    `db:"cc_name"`
@@ -47,7 +40,7 @@ func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entit
 
 func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
 	var company []*CompanyModel
-	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM companies_catalog_table WHERE cc_name = $1`, name)
+	err := pgxscan.Select(ctx, r.conn, &company, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name = $1`, name)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}
@@ -57,9 +50,10 @@ func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name s
 	}
 
 	return &entity.Companies{
-		ID:   company[0].CompanyID,
-		Name: company[0].ComapanyName,
-		Zip:  company[0].CompanyZIP,
+		ID:      company[0].CompanyID,
+		Name:    company[0].ComapanyName,
+		Zip:     company[0].CompanyZIP,
+		Website: company[0].CompanyWebSite,
 	}, nil
 }
 
@@ -71,7 +65,7 @@ func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company ent
 	return nil
 }
 
-func (r *PostgreCompanyRepository) GetCompany(ctx context.Context) ([]*entity.Companies, error) {
+func (r *PostgreCompanyRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	var companyModel []*CompanyModel
 	company := []*entity.Companies{}
 	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT * FROM companies_catalog_table`)
