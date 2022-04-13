@@ -14,7 +14,7 @@ import (
 type CompanyRepository interface {
 	AddCompany(ctx context.Context, company entity.Company) error
 	ReadCompany(ctx context.Context, name string) (*entity.Company, error)
-	GetCompany(ctx context.Context) (error, []entity.Company)
+	GetCompany(ctx context.Context) ([]*entity.Company, error)
 }
 
 type CompanyCSVRepository struct{}
@@ -23,12 +23,12 @@ func NewCompanyCSVRepository() *CompanyCSVRepository {
 	return &CompanyCSVRepository{}
 }
 
-func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []entity.Company {
-	var companyData []entity.Company
+func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entity.Company {
+	var companyData []*entity.Company
 
 	for i, line := range fileData {
 		if i > 0 {
-			var lineRead entity.Company
+			lineRead := &entity.Company{}
 
 			for j, field := range line {
 				if j == 0 {
@@ -49,11 +49,11 @@ func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []entity
 	return companyData
 }
 
-func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) (error, []entity.Company) {
+func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Company, error) {
 	f, err := os.Open("/mnt/c/Golang/data-integration-chalenge/data-integration-challenge/data/q1_catalog.csv")
 	if err != nil {
 		log.Fatal(err)
-		return err, nil
+		return nil, err
 	}
 
 	csvReader := csv.NewReader(f)
@@ -63,13 +63,13 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) (error, []ent
 
 	if err != nil {
 		log.Fatal(err)
-		return err, nil
+		return nil, err
 	}
 	defer f.Close()
 
 	companyData := createCompanyEntityByCSV(ctx, data)
 
-	return nil, companyData
+	return companyData, nil
 }
 
 func (ccCSV *CompanyCSVRepository) WriteCompany(ctx context.Context, company []entity.Company) error {

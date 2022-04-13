@@ -13,7 +13,7 @@ import (
 type CompanyRepository interface {
 	AddCompany(ctx context.Context, company entity.Company) error
 	ReadCompany(ctx context.Context, name string) (*entity.Company, error)
-	GetCompany(ctx context.Context) (error, []entity.Company)
+	GetCompany(ctx context.Context) ([]*entity.Company, error)
 }
 
 type CompanyModel struct {
@@ -45,7 +45,7 @@ func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entit
 
 func (r *PostgreCompanyRepository) ReadCompany(ctx context.Context, name string) (*entity.Company, error) {
 	var company []*CompanyModel
-	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM ompanies_catalog_table WHERE cc_name = $1`, name)
+	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM companies_catalog_table WHERE cc_name = $1`, name)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}
@@ -61,6 +61,24 @@ func (r *PostgreCompanyRepository) ReadCompany(ctx context.Context, name string)
 	}, nil
 }
 
-func (r *PostgreCompanyRepository) GetCompany(ctx context.Context) (error, []entity.Company) {
-	return nil, nil
+func (r *PostgreCompanyRepository) GetCompany(ctx context.Context) ([]*entity.Company, error) {
+	var companyModel []*CompanyModel
+	company := []*entity.Company{}
+	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT * FROM companies_catalog_table`)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %w", err)
+	}
+
+	if len(companyModel) == 0 {
+		return nil, nil
+	}
+
+	for index := range companyModel {
+		company = append(company, &entity.Company{
+			ID:   companyModel[index].CompanyID,
+			Name: companyModel[index].ComapanyName,
+			Zip:  companyModel[index].CompanyZIP,
+		})
+	}
+	return company, nil
 }
