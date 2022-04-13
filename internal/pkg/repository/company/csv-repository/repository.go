@@ -23,7 +23,7 @@ func NewCompanyCSVRepository() *CompanyCSVRepository {
 	return &CompanyCSVRepository{}
 }
 
-func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entity.Companies {
+func CreateCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entity.Companies {
 	var companyData []*entity.Companies
 
 	for i, line := range fileData {
@@ -31,15 +31,20 @@ func createCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entit
 			lineRead := &entity.Companies{}
 
 			for j, field := range line {
-				if j == 0 {
+				switch j {
+				case 0:
 					lineRead.Name = strings.ToUpper(field)
-				} else if j == 1 {
+				case 1:
 					lineRead.Zip = field
+				case 2:
+					lineRead.Website = field
 				}
 			}
+
 			companyData = append(companyData, lineRead)
 		}
 	}
+
 	return companyData
 }
 
@@ -61,7 +66,7 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context) ([]*entity.Co
 	}
 	defer f.Close()
 
-	companyData := createCompanyEntityByCSV(ctx, data)
+	companyData := CreateCompanyEntityByCSV(ctx, data)
 
 	return companyData, nil
 }
