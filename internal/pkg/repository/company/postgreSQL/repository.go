@@ -31,7 +31,7 @@ func NewPostgreCompanyRepository(conn connector) *PostgreCompanyRepository {
 }
 
 func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entity.Companies) error {
-	_, err := r.conn.Exec(ctx, `INSERT INTO companies_catalog_table(cc_company_id, cc_name, cc_zip) values($1, $2, $3)`, company.ID, company.Name, company.Zip)
+	_, err := r.conn.Exec(ctx, `INSERT INTO companies_catalog_table(cc_company_id, cc_name, cc_zip, cc_website) values($1, $2, $3, $4)`, company.ID, company.Name, company.Zip, company.Website)
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,32 @@ func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name s
 	}, nil
 }
 
+func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+	var companyModel []*CompanyModel
+	company := []*entity.Companies{}
+
+	pattern := fmt.Sprintf("%s%s%s", "%", name, "%")
+
+	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %w", err)
+	}
+
+	if len(companyModel) == 0 {
+		return nil, nil
+	}
+
+	for index := range companyModel {
+		company = append(company, &entity.Companies{
+			ID:      companyModel[index].CompanyID,
+			Name:    companyModel[index].ComapanyName,
+			Zip:     companyModel[index].CompanyZIP,
+			Website: companyModel[index].CompanyWebSite,
+		})
+	}
+	return company, nil
+}
+
 func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
 	_, err := r.conn.Exec(ctx, `UPDATE companies_catalog_table SET cc_name = $2, cc_zip = $3,  cc_website = $4 WHERE cc_company_id = $1`, company.ID, company.Name, company.Zip, company.Website)
 	if err != nil {
@@ -79,9 +105,10 @@ func (r *PostgreCompanyRepository) GetCompany(ctx context.Context, key string) (
 
 	for index := range companyModel {
 		company = append(company, &entity.Companies{
-			ID:   companyModel[index].CompanyID,
-			Name: companyModel[index].ComapanyName,
-			Zip:  companyModel[index].CompanyZIP,
+			ID:      companyModel[index].CompanyID,
+			Name:    companyModel[index].ComapanyName,
+			Zip:     companyModel[index].CompanyZIP,
+			Website: companyModel[index].CompanyWebSite,
 		})
 	}
 	return company, nil

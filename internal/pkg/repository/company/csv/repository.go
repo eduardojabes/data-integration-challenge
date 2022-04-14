@@ -3,7 +3,6 @@ package company
 import (
 	"context"
 	"encoding/csv"
-	"log"
 	"os"
 	"strings"
 
@@ -44,7 +43,6 @@ func CreateCompanyEntityByCSV(ctx context.Context, fileData [][]string) []*entit
 func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	f, err := os.Open(key)
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 
@@ -54,7 +52,6 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context, key string) (
 	data, err := csvReader.ReadAll()
 
 	if err != nil {
-		log.Fatal(err)
 		return nil, err
 	}
 	defer f.Close()
@@ -62,14 +59,4 @@ func (ccCSV *CompanyCSVRepository) GetCompany(ctx context.Context, key string) (
 	companyData := CreateCompanyEntityByCSV(ctx, data)
 
 	return companyData, nil
-}
-
-func (ccCSV *CompanyCSVRepository) AddCompany(ctx context.Context, company entity.Companies) error {
-	return nil
-}
-func (ccCSV *CompanyCSVRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
-	return nil, nil
-}
-func (ccCSV *CompanyCSVRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
-	return nil
 }

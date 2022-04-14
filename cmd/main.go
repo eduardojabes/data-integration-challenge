@@ -32,14 +32,14 @@ func main() {
 	csvRepository := csvRepository.NewCompanyCSVRepository()
 	companyService := companyService.NewCompanyService(dbRepository, csvRepository)
 
-	httpConector := routes.NewConnector()
-	httpConector.ImplementConnector(*companyService)
+	httpConector := routes.NewHandler()
+	httpConector.ImplementConnector(companyService)
 
 	path := "./data/q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
 
-	//path = "./data/q2_clientData.csv"
-	//companyService.UpdateDataBase(ctx, path)
+	path = "./data/q2_clientData.csv"
+	companyService.UpdateDataBaseFromCSV(ctx, path)
 
 	router := httpConector.NewRouter()
 
