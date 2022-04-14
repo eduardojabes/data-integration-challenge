@@ -36,7 +36,7 @@ var (
 	ERR_WHILE_MATCHING_ZIP      = errors.New("Error while matching company ZIP")
 	ERR_WHILE_WRITING           = errors.New("Error while writing company")
 	ERR_NOT_VALID_COMPANY       = errors.New("Error: There is invalid company camps")
-	ERR_WHILE_GETTING_COMPANIES = errors.New("Error while getting companies from repositoru")
+	ERR_WHILE_GETTING_COMPANIES = errors.New("Error while getting companies from repository")
 )
 
 func CheckNameValidity(name string) (bool, error) {
@@ -74,8 +74,8 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) err
 
 		companies, err := s.csvRepository.GetCompany(ctx, key)
 		if err != nil {
-			err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
-			return err
+			return fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
+
 		}
 
 		for _, company := range companies {
@@ -83,13 +83,11 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) err
 
 			CompanyNameIsValid, err := CheckNameValidity(company.Name)
 			if err != nil {
-				err = fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_NAME, err)
-				return err
+				return fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_NAME, err)
 			}
 			CompanyZIPIsValid, err := CheckZipValidity(company.Zip)
 			if err != nil {
-				err = fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_ZIP, err)
-				return err
+				return fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_ZIP, err)
 			}
 
 			if CompanyNameIsValid && CompanyZIPIsValid {
@@ -97,8 +95,7 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) err
 				err = s.dbRepository.AddCompany(ctx, *company)
 
 				if err != nil {
-					err = fmt.Errorf("%v: %w", ERR_WHILE_WRITING, err)
-					return err
+					return fmt.Errorf("%v: %w", ERR_WHILE_WRITING, err)
 				}
 			}
 		}
@@ -106,7 +103,7 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) err
 	return nil
 }
 
-func (s *CompanyService) UpdateDataBase(ctx context.Context, key string) error {
+func (s *CompanyService) UpdateDataBaseFromCSV(ctx context.Context, key string) error {
 	companies, err := s.csvRepository.GetCompany(ctx, key)
 	if err != nil {
 		err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
@@ -142,6 +139,7 @@ func CheckAllValidity(company *entity.Companies) (bool, error) {
 }
 
 func (s *CompanyService) AddCompany(ctx context.Context, company *entity.Companies) error {
+	company.Name = strings.ToUpper(company.Name)
 	ok, err := CheckAllValidity(company)
 
 	if !ok {

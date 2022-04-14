@@ -31,7 +31,7 @@ func NewPostgreCompanyRepository(conn connector) *PostgreCompanyRepository {
 }
 
 func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entity.Companies) error {
-	_, err := r.conn.Exec(ctx, `INSERT INTO companies_catalog_table(cc_company_id, cc_name, cc_zip) values($1, $2, $3)`, company.ID, company.Name, company.Zip)
+	_, err := r.conn.Exec(ctx, `INSERT INTO companies_catalog_table(cc_company_id, cc_name, cc_zip, cc_website) values($1, $2, $3, $4)`, company.ID, company.Name, company.Zip, company.Website)
 	if err != nil {
 		return err
 	}
@@ -79,9 +79,10 @@ func (r *PostgreCompanyRepository) GetCompany(ctx context.Context, key string) (
 
 	for index := range companyModel {
 		company = append(company, &entity.Companies{
-			ID:   companyModel[index].CompanyID,
-			Name: companyModel[index].ComapanyName,
-			Zip:  companyModel[index].CompanyZIP,
+			ID:      companyModel[index].CompanyID,
+			Name:    companyModel[index].ComapanyName,
+			Zip:     companyModel[index].CompanyZIP,
+			Website: companyModel[index].CompanyWebSite,
 		})
 	}
 	return company, nil
