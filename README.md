@@ -1,3 +1,46 @@
+
+# Data-Integration-Api
+
+The objective of this application is to expose a RESTful API to perform operation over companies data.
+
+## Stack
+- Go
+- PostgreSQL
+- Docker
+- Goose
+
+## Endpoints
+After start up, the API will be avaible listening port 5000 for following endpoints.
+
+| Name | Path | Method | Content-Type | Description |
+| ------ | ------ | ------ | ------ | ------ |
+| List all companies| /v1/companies | GET | application/json | Retrieve all companies stored in the database. |
+| Search company by name and zip | /v1/companies/search?name={value}&zip={value} | GET | application/json | Provides companies informations based on query parameters values. Company name can be part of the company's name but zip needs to be the entire zip code of the company|
+| Create company | /v1/companies | POST | application/json | Create a new company.|
+| Merge companies with CSV | /v1/companies/merge-all-companies | POST | multipart/form-data | Parses a valid CSV file and integrate its in the actual database. If the will be discarded if ir doesn't exist. The key of the file must be named "csv".|
+
+
+## Setup
+
+First, you need to have docker and docker-compose installed. The instructions can be found [here](https://docs.docker.com/install/)
+
+## Container
+
+To run the application execute:
+
+```sh
+docker-compose up -d
+```
+On first time the application will load data in **q1_catalog.csv**
+
+### Tests
+
+To perform tests with go, run from project root:
+
+```sh
+go test ./...
+```
+
 # Data integration challenge
 
 
