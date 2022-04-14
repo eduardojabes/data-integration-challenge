@@ -38,8 +38,8 @@ func main() {
 	path := "./data/q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
 
-	path = "./data/q2_clientData.csv"
-	companyService.UpdateDataBaseFromCSV(ctx, path)
+	//path = "./data/q2_clientData.csv"
+	//companyService.UpdateDataBaseFromCSV(ctx, path)
 
 	router := httpConector.NewRouter()
 
