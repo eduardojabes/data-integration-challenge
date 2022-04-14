@@ -13,7 +13,6 @@ import (
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
-	service "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 	"github.com/google/uuid"
 )
 
@@ -24,15 +23,22 @@ type Companies struct {
 	Website string    `json:"website"`
 }
 
+type CompanyService interface {
+	AddCompany(ctx context.Context, company *entity.Companies) error
+	GetCompanies() ([]entity.Companies, error)
+	FindByNameAndZip(name string, zip string) ([]entity.Companies, error)
+	UpdateCompany(ctx context.Context, company *entity.Companies) error
+}
+
 type CompanyHandler struct {
-	service service.CompanyService
+	service CompanyService
 }
 
 func NewCompanyHandler() *CompanyHandler {
 	return &CompanyHandler{}
 }
 
-func (c *CompanyHandler) Register(service service.CompanyService) {
+func (c *CompanyHandler) Register(service CompanyService) {
 	c.service = service
 }
 
@@ -123,6 +129,7 @@ func (c *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
+//MergeCompanies POST /v1/companies multipart/form-data
 func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 

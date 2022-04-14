@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	CompanyConnector "github.com/eduardojabes/data-integration-challenge/internal/pkg/handler/company"
-	companyService "github.com/eduardojabes/data-integration-challenge/internal/pkg/service/company"
 )
 
 type Route struct {
@@ -58,7 +57,7 @@ func (c *Handler) AddRoutesToConnector() {
 	}
 }
 
-func (c *Handler) ImplementConnector(service companyService.CompanyService) {
+func (c *Handler) ImplementConnector(service CompanyConnector.CompanyService) {
 	c.connector.Register(service)
 	c.AddRoutesToConnector()
 }

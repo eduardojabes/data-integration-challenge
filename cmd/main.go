@@ -33,7 +33,7 @@ func main() {
 	companyService := companyService.NewCompanyService(dbRepository, csvRepository)
 
 	httpConector := routes.NewHandler()
-	httpConector.ImplementConnector(*companyService)
+	httpConector.ImplementConnector(companyService)
 
 	path := "./data/q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
