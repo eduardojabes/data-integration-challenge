@@ -146,12 +146,10 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 	data, err := csvreader.ReadAll()
 
 	if err != nil {
-		log.Fatalln("Error MergeCompany", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if len(data) == 0 {
-		log.Fatalln("Empty file")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -160,11 +158,11 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 	for _, company := range companyData {
 		err = c.service.UpdateCompany(ctx, company)
 		if err != nil {
-			log.Fatalln("Error UpdatingCompany", err)
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 	return
 }

@@ -1,11 +1,12 @@
 package company
 
 import (
+	"bytes"
 	"context"
-	"encoding/csv"
 	"errors"
+	"io"
+	"mime/multipart"
 	"os"
-	"reflect"
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 
@@ -25,27 +26,27 @@ func (mcs *MockCompanyService) GetCompanies() ([]entity.Companies, error) {
 	if mcs.GetCompaniesMock != nil {
 		return mcs.GetCompaniesMock()
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("GetCompaniesMock")
 }
 func (mcs *MockCompanyService) AddCompany(ctx context.Context, company *entity.Companies) error {
 	if mcs.AddCompanyMock != nil {
 		return mcs.AddCompanyMock(ctx, company)
 	}
-	return errors.New("GetCodeFileMock must be set")
+	return errors.New("AddCompanyMock")
 }
 
 func (mcs *MockCompanyService) FindByNameAndZip(name string, zip string) ([]entity.Companies, error) {
 	if mcs.FindByNameAndZipMock != nil {
 		return mcs.FindByNameAndZipMock(name, zip)
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("FindByNameAndZipMock")
 }
 
 func (mcs *MockCompanyService) UpdateCompany(ctx context.Context, company *entity.Companies) error {
 	if mcs.UpdateCompanyMock != nil {
 		return mcs.UpdateCompanyMock(ctx, company)
 	}
-	return errors.New("GetCodeFileMock must be set")
+	return errors.New("UpdateCompanyMock")
 }
 
 type Service struct {
@@ -53,22 +54,92 @@ type Service struct {
 }
 
 func TestMergeCompanies(t *testing.T) {
-	companyService := &MockCompanyService{}
 
 	t.Run("functional CSV", func(t *testing.T) {
-		f, _ := os.Open("test_CSV.csv")
-		csvReader := csv.NewReader(f)
-		data, _ := csvReader.ReadAll()
+		companyService := &MockCompanyService{
+			UpdateCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return nil
+			},
+		}
 
-		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", f)
+		file, _ := os.Open("test_CSV.csv")
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		ff, _ := writer.CreateFormFile("csv", "test_CSV.csv")
+		io.Copy(ff, file)
+
+		writer.Close()
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", bytes.NewReader(body.Bytes()))
+		request.Header.Add("Content-Type", writer.FormDataContentType())
+
 		response := httptest.NewRecorder()
-
 		companyHandler := NewCompanyHandler()
 		companyHandler.Register(companyService)
 
 		companyHandler.MergeCompanies(response, request)
-		if !reflect.DeepEqual(response.Body.String(), data) {
-			t.Errorf(`got "%s", want "%s"`, response.Body.String(), data)
+		if response.Result().StatusCode != http.StatusOK {
+			t.Errorf(`got "%d", want "%d"`, response.Result().StatusCode, http.StatusOK)
 		}
 	})
+
+	t.Run("error in database", func(t *testing.T) {
+		companyService := &MockCompanyService{
+			UpdateCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return errors.New("error")
+			},
+		}
+
+		file, _ := os.Open("test_CSV.csv")
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		ff, _ := writer.CreateFormFile("csv", "test_CSV.csv")
+		io.Copy(ff, file)
+
+		writer.Close()
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", bytes.NewReader(body.Bytes()))
+		request.Header.Add("Content-Type", writer.FormDataContentType())
+
+		response := httptest.NewRecorder()
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.MergeCompanies(response, request)
+		if response.Result().StatusCode == http.StatusOK {
+			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
+		}
+	})
+
+	t.Run("error in CSV", func(t *testing.T) {
+		companyService := &MockCompanyService{
+			UpdateCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return nil
+			},
+		}
+
+		file, _ := os.Open("CSV.csv")
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		ff, _ := writer.CreateFormFile("csv", "test_CSV.csv")
+		io.Copy(ff, file)
+
+		writer.Close()
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", bytes.NewReader(body.Bytes()))
+		request.Header.Add("Content-Type", writer.FormDataContentType())
+
+		response := httptest.NewRecorder()
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.MergeCompanies(response, request)
+		if response.Result().StatusCode == http.StatusOK {
+			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
+		}
+	})
+
 }
