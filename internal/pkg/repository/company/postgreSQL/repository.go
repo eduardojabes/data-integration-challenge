@@ -57,6 +57,32 @@ func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name s
 	}, nil
 }
 
+func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+	var companyModel []*CompanyModel
+	company := []*entity.Companies{}
+
+	pattern := fmt.Sprintf("%s%s%s", "%", name, "%")
+
+	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
+	if err != nil {
+		return nil, fmt.Errorf("error while executing query: %w", err)
+	}
+
+	if len(companyModel) == 0 {
+		return nil, nil
+	}
+
+	for index := range companyModel {
+		company = append(company, &entity.Companies{
+			ID:      companyModel[index].CompanyID,
+			Name:    companyModel[index].ComapanyName,
+			Zip:     companyModel[index].CompanyZIP,
+			Website: companyModel[index].CompanyWebSite,
+		})
+	}
+	return company, nil
+}
+
 func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
 	_, err := r.conn.Exec(ctx, `UPDATE companies_catalog_table SET cc_name = $2, cc_zip = $3,  cc_website = $4 WHERE cc_company_id = $1`, company.ID, company.Name, company.Zip, company.Website)
 	if err != nil {

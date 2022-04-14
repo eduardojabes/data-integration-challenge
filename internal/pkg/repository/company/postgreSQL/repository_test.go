@@ -117,6 +117,68 @@ func TestReadCompanyByName(t *testing.T) {
 	})
 }
 
+func TestSearchCompanyByNameAndZip(t *testing.T) {
+	t.Run("no_rows", func(t *testing.T) {
+		mock, _ := pgxmock.NewConn()
+		mock.ExpectQuery("SELECT (.+) FROM companies_catalog_table WHERE (.+)").
+			WillReturnRows(mock.NewRows([]string{"cc_company_id", "cc_name", "cc_zip", "cc_website"}))
+
+		repository := NewPostgreCompanyRepository(mock)
+
+		user, err := repository.SearchCompanyByNameAndZip(context.Background(), "company", "12345")
+
+		if err != nil {
+			t.Errorf("got %v error, it should be nil", err)
+		}
+
+		if user != nil {
+			t.Errorf("got %v want nil", user)
+		}
+	})
+
+	t.Run("with_company", func(t *testing.T) {
+		mock, _ := pgxmock.NewConn()
+
+		company := &entity.Companies{
+			ID:      uuid.New(),
+			Name:    "Company",
+			Zip:     "12345",
+			Website: "www.company.com",
+		}
+
+		mock.ExpectQuery("SELECT (.+) FROM companies_catalog_table WHERE (.+)").
+			WillReturnRows(mock.NewRows([]string{"cc_company_id", "cc_name", "cc_zip", "cc_website"}).
+				AddRow(company.ID, company.Name, company.Zip, company.Website))
+
+		repository := NewPostgreCompanyRepository(mock)
+
+		got, err := repository.SearchCompanyByNameAndZip(context.Background(), "com", company.Zip)
+
+		if err != nil {
+			t.Errorf("got %v error, it should be nil", err)
+		}
+
+		if !reflect.DeepEqual(company, got[0]) {
+			t.Errorf("got %v want %v", got[0], company)
+		}
+	})
+
+	t.Run("with_error", func(t *testing.T) {
+		mock, _ := pgxmock.NewConn()
+
+		mock.ExpectQuery("SELECT (.+) FROM companies_catalog_table WHERE (.+)").
+			WillReturnError(errors.New("error"))
+
+		repository := NewPostgreCompanyRepository(mock)
+
+		_, err := repository.ReadCompanyByName(context.Background(), "company")
+
+		if err == nil {
+			t.Errorf("got %v want nil", err)
+		}
+	})
+}
+
 func TestUpdateComapany(t *testing.T) {
 	mock, _ := pgxmock.NewConn()
 

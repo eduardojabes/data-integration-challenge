@@ -3,6 +3,7 @@ package company
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
@@ -10,10 +11,11 @@ import (
 )
 
 type MockCompanyRepository struct {
-	AddCompanyMock        func(ctx context.Context, company entity.Companies) error
-	ReadCompanyByNameMock func(ctx context.Context, name string) (*entity.Companies, error)
-	UpdateCompanyMock     func(ctx context.Context, company entity.Companies) error
-	GetCompanyMock        func(ctx context.Context, key string) ([]*entity.Companies, error)
+	AddCompanyMock                func(ctx context.Context, company entity.Companies) error
+	ReadCompanyByNameMock         func(ctx context.Context, name string) (*entity.Companies, error)
+	SearchCompanyByNameAndZipMock func(ctx context.Context, name string, zip string) ([]*entity.Companies, error)
+	UpdateCompanyMock             func(ctx context.Context, company entity.Companies) error
+	GetCompanyMock                func(ctx context.Context, key string) ([]*entity.Companies, error)
 }
 
 func (mcr *MockCompanyRepository) AddCompany(ctx context.Context, company entity.Companies) error {
@@ -40,6 +42,13 @@ func (mcr *MockCompanyRepository) UpdateCompany(ctx context.Context, company ent
 func (mcr *MockCompanyRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	if mcr.GetCompanyMock != nil {
 		return mcr.GetCompanyMock(ctx, key)
+	}
+	return nil, errors.New("GetCodeFileMock must be set")
+}
+
+func (mcr *MockCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+	if mcr.SearchCompanyByNameAndZipMock != nil {
+		return mcr.SearchCompanyByNameAndZipMock(ctx, name, zip)
 	}
 	return nil, errors.New("GetCodeFileMock must be set")
 }
@@ -500,6 +509,109 @@ func TestUpdateCompany(t *testing.T) {
 
 		if err != nil {
 			t.Errorf("not expected an error, but got %v", err)
+		}
+	})
+}
+
+func TestGetCompanies(t *testing.T) {
+	t.Run("Error getting data from database", func(t *testing.T) {
+		want := errors.New("error")
+
+		dbRepository := &MockCompanyRepository{
+			GetCompanyMock: func(ctx context.Context, key string) ([]*entity.Companies, error) {
+				return nil, want
+			},
+		}
+
+		csvRepository := &MockCsvCompanyRepository{}
+
+		service := NewCompanyService(dbRepository, csvRepository)
+
+		_, err := service.GetCompanies()
+
+		if &err == nil {
+			t.Errorf("expected an error, but got %v", err)
+		}
+	})
+	t.Run("Getting data from database", func(t *testing.T) {
+
+		company := &entity.Companies{
+			ID:      uuid.New(),
+			Name:    "Company",
+			Zip:     "12345",
+			Website: "http://www.company.com",
+		}
+
+		readData := []*entity.Companies{company}
+		dbRepository := &MockCompanyRepository{
+			GetCompanyMock: func(ctx context.Context, key string) ([]*entity.Companies, error) {
+				return readData, nil
+			},
+		}
+
+		csvRepository := &MockCsvCompanyRepository{}
+
+		service := NewCompanyService(dbRepository, csvRepository)
+
+		got, err := service.GetCompanies()
+
+		if err != nil {
+			t.Errorf("not expected an error, but got %v", err)
+		}
+		if !reflect.DeepEqual(*company, got[0]) {
+			t.Errorf("expected %v, but got %v", *company, got[0])
+		}
+	})
+}
+
+func TestFindByNameAndZip(t *testing.T) {
+	t.Run("Error getting data from database", func(t *testing.T) {
+		want := errors.New("error")
+
+		dbRepository := &MockCompanyRepository{
+			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) ([]*entity.Companies, error) {
+				return nil, want
+			},
+		}
+
+		csvRepository := &MockCsvCompanyRepository{}
+
+		service := NewCompanyService(dbRepository, csvRepository)
+
+		_, err := service.FindByNameAndZip("", "")
+
+		if &err == nil {
+			t.Errorf("expected an error, but got %v", err)
+		}
+	})
+	t.Run("Getting data from database", func(t *testing.T) {
+
+		company := &entity.Companies{
+			ID:      uuid.New(),
+			Name:    "Company",
+			Zip:     "12345",
+			Website: "http://www.company.com",
+		}
+
+		readData := []*entity.Companies{company}
+
+		dbRepository := &MockCompanyRepository{
+			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) ([]*entity.Companies, error) {
+				return readData, nil
+			},
+		}
+
+		csvRepository := &MockCsvCompanyRepository{}
+
+		service := NewCompanyService(dbRepository, csvRepository)
+
+		got, err := service.FindByNameAndZip(company.Name, company.Zip)
+
+		if err != nil {
+			t.Errorf("not expected an error, but got %v", err)
+		}
+		if !reflect.DeepEqual(*company, got[0]) {
+			t.Errorf("expected %v, but got %v", *company, got[0])
 		}
 	})
 }

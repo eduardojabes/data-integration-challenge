@@ -14,6 +14,7 @@ import (
 type dbCompanyRepository interface {
 	AddCompany(ctx context.Context, company entity.Companies) error
 	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
+	SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company entity.Companies) error
 }
 type csvCompanyRepository interface {
@@ -184,6 +185,24 @@ func (s *CompanyService) UpdateCompany(ctx context.Context, company *entity.Comp
 		return err
 	}
 	return nil
+}
+
+func (s *CompanyService) GetCompanies() ([]entity.Companies, error) {
+	companiesReferences, err := s.dbRepository.GetCompany(context.Background(), "")
+	var companies []entity.Companies
+	for _, values := range companiesReferences {
+		companies = append(companies, *values)
+	}
+	return companies, err
+}
+
+func (s *CompanyService) FindByNameAndZip(name string, zip string) ([]entity.Companies, error) {
+	companiesReferences, err := s.dbRepository.SearchCompanyByNameAndZip(context.Background(), name, zip)
+	var companies []entity.Companies
+	for _, values := range companiesReferences {
+		companies = append(companies, *values)
+	}
+	return companies, err
 }
 
 func NewCompanyService(dbRepository CompanyRepository, csvRepository csvCompanyRepository) *CompanyService {

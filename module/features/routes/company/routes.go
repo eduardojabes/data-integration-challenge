@@ -18,19 +18,37 @@ type Route struct {
 
 type Routes []Route
 
-type Connector struct {
-	connector CompanyConnector.CompanyConnector
+type Handler struct {
+	connector CompanyConnector.CompanyHandler
 	route     Routes
 }
 
-func NewConnector() *Connector {
-	return &Connector{
-		connector: *CompanyConnector.NewCompanyConnector(),
+func NewHandler() *Handler {
+	return &Handler{
+		connector: *CompanyConnector.NewCompanyHandler(),
 	}
 }
 
-func (c *Connector) AddRoutesToConnector() {
+func (c *Handler) AddRoutesToConnector() {
 	c.route = Routes{
+		Route{
+			"GetCompanies",
+			"GET",
+			"/v1/companies",
+			c.connector.GetCompanies,
+		},
+		Route{
+			"SearchCompany",
+			"GET",
+			"/v1/companies/search",
+			c.connector.GetCompanyByNameAndZip,
+		},
+		Route{
+			"CreateCompany",
+			"POST",
+			"/v1/companies",
+			c.connector.CreateCompany,
+		},
 		Route{
 			"MergeCompany",
 			"POST",
@@ -40,7 +58,7 @@ func (c *Connector) AddRoutesToConnector() {
 	}
 }
 
-func (c *Connector) ImplementConnector(service companyService.CompanyService) {
+func (c *Handler) ImplementConnector(service companyService.CompanyService) {
 	c.connector.Register(service)
 	c.AddRoutesToConnector()
 }

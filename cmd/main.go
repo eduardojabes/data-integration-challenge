@@ -32,7 +32,7 @@ func main() {
 	csvRepository := csvRepository.NewCompanyCSVRepository()
 	companyService := companyService.NewCompanyService(dbRepository, csvRepository)
 
-	httpConector := routes.NewConnector()
+	httpConector := routes.NewHandler()
 	httpConector.ImplementConnector(*companyService)
 
 	path := "./data/q1_catalog.csv"
