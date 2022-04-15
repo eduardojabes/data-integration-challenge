@@ -3,6 +3,7 @@ package company
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"mime/multipart"
@@ -142,4 +143,89 @@ func TestMergeCompanies(t *testing.T) {
 		}
 	})
 
+}
+
+func TestCreateCompany(t *testing.T) {
+	t.Run("AddCompany", func(t *testing.T) {
+		companyService := &MockCompanyService{
+			AddCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return nil
+			},
+		}
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		companyJSON, _ := json.Marshal(company)
+
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.CreateCompany(response, request)
+		if response.Result().StatusCode != http.StatusCreated {
+			t.Errorf(`got "%d", but don't want an error"`, response.Result().StatusCode)
+		}
+	})
+
+	t.Run("error with server", func(t *testing.T) {
+		err := errors.New("error")
+
+		companyService := &MockCompanyService{
+			AddCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return err
+			},
+		}
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		companyJSON, _ := json.Marshal(company)
+
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.CreateCompany(response, request)
+		if response.Result().StatusCode == http.StatusCreated {
+			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
+		}
+	})
+
+	t.Run("error with json", func(t *testing.T) {
+		err := errors.New("error")
+
+		companyService := &MockCompanyService{
+			AddCompanyMock: func(ctx context.Context, company *entity.Companies) error {
+				return err
+			},
+		}
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+		errorbytes := []byte("error")
+		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		companyJSON, _ := json.Marshal(company)
+		companyJSON = append(companyJSON, errorbytes...)
+
+		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
+		request.Header.Set("Content-Type", writer.FormDataContentType())
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.CreateCompany(response, request)
+		if response.Result().StatusCode == http.StatusCreated {
+			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
+		}
+	})
 }

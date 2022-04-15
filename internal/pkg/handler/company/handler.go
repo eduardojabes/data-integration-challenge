@@ -17,7 +17,7 @@ import (
 )
 
 type Companies struct {
-	ID      uuid.UUID `json:"id"`
+	ID      uuid.UUID `json:"_id"`
 	Name    string    `json:"name"`
 	Zip     string    `json:"zipCode"`
 	Website string    `json:"website"`
