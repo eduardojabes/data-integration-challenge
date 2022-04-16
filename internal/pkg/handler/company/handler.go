@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -123,6 +124,7 @@ func (c *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 
 //MergeCompanies POST /v1/companies multipart/form-data
 func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) {
+	ERR_COMPANY_NOT_EXISTS := errors.New("Erro: there is no company with this name")
 	ctx := context.Background()
 
 	file, _, err := r.FormFile("csv")
@@ -149,7 +151,8 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 	companyData := csvRepository.CreateCompanyEntityByCSV(ctx, data)
 	for _, company := range companyData {
 		err = c.service.UpdateCompany(ctx, company)
-		if err != nil {
+
+		if err != nil && errors.Is(err, ERR_COMPANY_NOT_EXISTS) {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}

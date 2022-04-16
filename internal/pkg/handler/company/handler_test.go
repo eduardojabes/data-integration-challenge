@@ -316,7 +316,7 @@ func TestGetCompanyByNameAndZip(t *testing.T) {
 
 		err := json.Unmarshal(body, &readCompany)
 		if &err == nil {
-			t.Errorf(`got "%v", but expected an error"`, err)
+			t.Errorf(`got "%v", but expected nil"`, err)
 		}
 		if reflect.DeepEqual(company, &readCompany) {
 			t.Errorf(`got "%s", want empty company`, readCompany)
