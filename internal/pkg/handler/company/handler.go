@@ -13,20 +13,12 @@ import (
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
-	"github.com/google/uuid"
 )
-
-type Companies struct {
-	ID      uuid.UUID `json:"_id"`
-	Name    string    `json:"name"`
-	Zip     string    `json:"zipCode"`
-	Website string    `json:"website"`
-}
 
 type CompanyService interface {
 	AddCompany(ctx context.Context, company *entity.Companies) error
 	GetCompanies() ([]entity.Companies, error)
-	FindByNameAndZip(name string, zip string) ([]entity.Companies, error)
+	FindByNameAndZip(name string, zip string) (*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company *entity.Companies) error
 }
 

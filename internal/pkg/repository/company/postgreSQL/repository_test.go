@@ -158,8 +158,8 @@ func TestSearchCompanyByNameAndZip(t *testing.T) {
 			t.Errorf("got %v error, it should be nil", err)
 		}
 
-		if !reflect.DeepEqual(company, got[0]) {
-			t.Errorf("got %v want %v", got[0], company)
+		if !reflect.DeepEqual(company, got) {
+			t.Errorf("got %v want %v", got, company)
 		}
 	})
 

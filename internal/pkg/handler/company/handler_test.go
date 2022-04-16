@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"os"
+	"reflect"
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 
@@ -19,7 +22,7 @@ import (
 type MockCompanyService struct {
 	GetCompaniesMock     func() ([]entity.Companies, error)
 	AddCompanyMock       func(ctx context.Context, company *entity.Companies) error
-	FindByNameAndZipMock func(name string, zip string) ([]entity.Companies, error)
+	FindByNameAndZipMock func(name string, zip string) (*entity.Companies, error)
 	UpdateCompanyMock    func(ctx context.Context, company *entity.Companies) error
 }
 
@@ -36,7 +39,7 @@ func (mcs *MockCompanyService) AddCompany(ctx context.Context, company *entity.C
 	return errors.New("AddCompanyMock")
 }
 
-func (mcs *MockCompanyService) FindByNameAndZip(name string, zip string) ([]entity.Companies, error) {
+func (mcs *MockCompanyService) FindByNameAndZip(name string, zip string) (*entity.Companies, error) {
 	if mcs.FindByNameAndZipMock != nil {
 		return mcs.FindByNameAndZipMock(name, zip)
 	}
@@ -55,7 +58,6 @@ type Service struct {
 }
 
 func TestMergeCompanies(t *testing.T) {
-
 	t.Run("functional CSV", func(t *testing.T) {
 		companyService := &MockCompanyService{
 			UpdateCompanyMock: func(ctx context.Context, company *entity.Companies) error {
@@ -153,14 +155,10 @@ func TestCreateCompany(t *testing.T) {
 			},
 		}
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-
-		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		company := entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
 		companyJSON, _ := json.Marshal(company)
 
 		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
-		request.Header.Set("Content-Type", writer.FormDataContentType())
 		response := httptest.NewRecorder()
 
 		companyHandler := NewCompanyHandler()
@@ -181,14 +179,10 @@ func TestCreateCompany(t *testing.T) {
 			},
 		}
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-
-		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		company := entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
 		companyJSON, _ := json.Marshal(company)
 
 		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
-		request.Header.Set("Content-Type", writer.FormDataContentType())
 		response := httptest.NewRecorder()
 
 		companyHandler := NewCompanyHandler()
@@ -209,15 +203,12 @@ func TestCreateCompany(t *testing.T) {
 			},
 		}
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
 		errorbytes := []byte("error")
-		company := Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+		company := entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
 		companyJSON, _ := json.Marshal(company)
 		companyJSON = append(companyJSON, errorbytes...)
 
 		request := httptest.NewRequest(http.MethodPost, "/v1/companies", bytes.NewBuffer(companyJSON))
-		request.Header.Set("Content-Type", writer.FormDataContentType())
 		response := httptest.NewRecorder()
 
 		companyHandler := NewCompanyHandler()
@@ -226,6 +217,109 @@ func TestCreateCompany(t *testing.T) {
 		companyHandler.CreateCompany(response, request)
 		if response.Result().StatusCode == http.StatusCreated {
 			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
+		}
+	})
+}
+
+func TestGetCompanyByNameAndZip(t *testing.T) {
+	t.Run("get company by name and zip", func(t *testing.T) {
+		nameForSearch := "Company"
+		zipForSearch := "12345"
+		company := &entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+
+		companyService := &MockCompanyService{
+			FindByNameAndZipMock: func(name string, zip string) (*entity.Companies, error) {
+				return company, nil
+			},
+		}
+
+		queryURL := fmt.Sprintf("/v1/companies/search?name=%s&zip=%s", nameForSearch, zipForSearch)
+		dummyIO := []byte{}
+
+		request := httptest.NewRequest(http.MethodPost, queryURL, bytes.NewBuffer(dummyIO))
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.GetCompanyByNameAndZip(response, request)
+
+		var readCompany entity.Companies
+		body, _ := ioutil.ReadAll(io.LimitReader(response.Body, 128*1024*8)) //128kb
+
+		err := json.Unmarshal(body, &readCompany)
+		if err != nil {
+			t.Errorf(`got "%v", but expected none"`, err)
+		}
+		if !reflect.DeepEqual(company, &readCompany) {
+			t.Errorf(`got "%s", want %s"`, readCompany, company)
+		}
+	})
+
+	t.Run("error with server", func(t *testing.T) {
+		nameForSearch := "Company"
+		zipForSearch := "12345"
+		company := &entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+
+		companyService := &MockCompanyService{
+			FindByNameAndZipMock: func(name string, zip string) (*entity.Companies, error) {
+				return nil, errors.New("error")
+			},
+		}
+
+		queryURL := fmt.Sprintf("/v1/companies/search?name=%s&zip=%s", nameForSearch, zipForSearch)
+		dummyIO := []byte{}
+
+		request := httptest.NewRequest(http.MethodPost, queryURL, bytes.NewBuffer(dummyIO))
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.GetCompanyByNameAndZip(response, request)
+
+		var readCompany entity.Companies
+		body, _ := ioutil.ReadAll(io.LimitReader(response.Body, 128*1024*8)) //128kb
+
+		err := json.Unmarshal(body, &readCompany)
+		if err == nil {
+			t.Errorf(`got "%v", but expected an error"`, err)
+		}
+		if reflect.DeepEqual(company, &readCompany) {
+			t.Errorf(`got "%s", want empty company`, readCompany)
+		}
+	})
+	t.Run("not exist company", func(t *testing.T) {
+		nameForSearch := "Company"
+		zipForSearch := "12345"
+		company := &entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://new_website.com"}
+
+		companyService := &MockCompanyService{
+			FindByNameAndZipMock: func(name string, zip string) (*entity.Companies, error) {
+				return nil, nil
+			},
+		}
+
+		queryURL := fmt.Sprintf("/v1/companies/search?name=%s&zip=%s", nameForSearch, zipForSearch)
+		dummyIO := []byte{}
+
+		request := httptest.NewRequest(http.MethodPost, queryURL, bytes.NewBuffer(dummyIO))
+		response := httptest.NewRecorder()
+
+		companyHandler := NewCompanyHandler()
+		companyHandler.Register(companyService)
+
+		companyHandler.GetCompanyByNameAndZip(response, request)
+
+		var readCompany entity.Companies
+		body, _ := ioutil.ReadAll(io.LimitReader(response.Body, 128*1024*8)) //128kb
+
+		err := json.Unmarshal(body, &readCompany)
+		if &err == nil {
+			t.Errorf(`got "%v", but expected an error"`, err)
+		}
+		if reflect.DeepEqual(company, &readCompany) {
+			t.Errorf(`got "%s", want empty company`, readCompany)
 		}
 	})
 }

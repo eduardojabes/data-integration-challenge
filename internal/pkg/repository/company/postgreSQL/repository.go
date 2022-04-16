@@ -57,9 +57,8 @@ func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name s
 	}, nil
 }
 
-func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) (*entity.Companies, error) {
 	var companyModel []*CompanyModel
-	company := []*entity.Companies{}
 
 	pattern := fmt.Sprintf("%s%s%s", "%", name, "%")
 
@@ -71,16 +70,13 @@ func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context
 	if len(companyModel) == 0 {
 		return nil, nil
 	}
+	return &entity.Companies{
+		ID:      companyModel[0].CompanyID,
+		Name:    companyModel[0].ComapanyName,
+		Zip:     companyModel[0].CompanyZIP,
+		Website: companyModel[0].CompanyWebSite,
+	}, nil
 
-	for index := range companyModel {
-		company = append(company, &entity.Companies{
-			ID:      companyModel[index].CompanyID,
-			Name:    companyModel[index].ComapanyName,
-			Zip:     companyModel[index].CompanyZIP,
-			Website: companyModel[index].CompanyWebSite,
-		})
-	}
-	return company, nil
 }
 
 func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {

@@ -13,7 +13,7 @@ import (
 type MockCompanyRepository struct {
 	AddCompanyMock                func(ctx context.Context, company entity.Companies) error
 	ReadCompanyByNameMock         func(ctx context.Context, name string) (*entity.Companies, error)
-	SearchCompanyByNameAndZipMock func(ctx context.Context, name string, zip string) ([]*entity.Companies, error)
+	SearchCompanyByNameAndZipMock func(ctx context.Context, name string, zip string) (*entity.Companies, error)
 	UpdateCompanyMock             func(ctx context.Context, company entity.Companies) error
 	GetCompanyMock                func(ctx context.Context, key string) ([]*entity.Companies, error)
 }
@@ -46,7 +46,7 @@ func (mcr *MockCompanyRepository) GetCompany(ctx context.Context, key string) ([
 	return nil, errors.New("GetCodeFileMock must be set")
 }
 
-func (mcr *MockCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+func (mcr *MockCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) (*entity.Companies, error) {
 	if mcr.SearchCompanyByNameAndZipMock != nil {
 		return mcr.SearchCompanyByNameAndZipMock(ctx, name, zip)
 	}
@@ -569,7 +569,7 @@ func TestFindByNameAndZip(t *testing.T) {
 		want := errors.New("error")
 
 		dbRepository := &MockCompanyRepository{
-			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) ([]*entity.Companies, error) {
+			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) (*entity.Companies, error) {
 				return nil, want
 			},
 		}
@@ -593,11 +593,9 @@ func TestFindByNameAndZip(t *testing.T) {
 			Website: "http://www.company.com",
 		}
 
-		readData := []*entity.Companies{company}
-
 		dbRepository := &MockCompanyRepository{
-			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) ([]*entity.Companies, error) {
-				return readData, nil
+			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) (*entity.Companies, error) {
+				return company, nil
 			},
 		}
 
@@ -610,8 +608,8 @@ func TestFindByNameAndZip(t *testing.T) {
 		if err != nil {
 			t.Errorf("not expected an error, but got %v", err)
 		}
-		if !reflect.DeepEqual(*company, got[0]) {
-			t.Errorf("expected %v, but got %v", *company, got[0])
+		if !reflect.DeepEqual(company, got) {
+			t.Errorf("expected %v, but got %v", company, got)
 		}
 	})
 }

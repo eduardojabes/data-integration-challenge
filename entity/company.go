@@ -3,8 +3,8 @@ package entity
 import "github.com/google/uuid"
 
 type Companies struct {
-	ID      uuid.UUID
-	Name    string
-	Zip     string
-	Website string
+	ID      uuid.UUID `json:"_id"`
+	Name    string    `json:"name"`
+	Zip     string    `json:"zipCode"`
+	Website string    `json:"website"`
 }
