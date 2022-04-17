@@ -40,7 +40,7 @@ func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entit
 
 func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
 	var company []*CompanyModel
-	err := pgxscan.Select(ctx, r.conn, &company, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name = $1`, name)
+	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM companies_catalog_table WHERE cc_name = $1`, name)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}
@@ -62,7 +62,7 @@ func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context
 
 	pattern := fmt.Sprintf("%s%s%s", "%", name, "%")
 
-	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
+	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT * FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}

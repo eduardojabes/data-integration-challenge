@@ -68,14 +68,14 @@ func TestMergeCompanies(t *testing.T) {
 		file, _ := os.Open("test_CSV.csv")
 
 		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
+		mpWriter := multipart.NewWriter(body)
 
-		ff, _ := writer.CreateFormFile("csv", "test_CSV.csv")
-		io.Copy(ff, file)
+		ioWriter, _ := mpWriter.CreateFormFile("csv", "test_CSV.csv")
+		io.Copy(ioWriter, file)
 
-		writer.Close()
+		mpWriter.Close()
 		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", bytes.NewReader(body.Bytes()))
-		request.Header.Add("Content-Type", writer.FormDataContentType())
+		request.Header.Add("Content-Type", mpWriter.FormDataContentType())
 
 		response := httptest.NewRecorder()
 		companyHandler := NewCompanyHandler()
@@ -97,21 +97,21 @@ func TestMergeCompanies(t *testing.T) {
 		file, _ := os.Open("test_CSV.csv")
 
 		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
+		mpWriter := multipart.NewWriter(body)
 
-		ff, _ := writer.CreateFormFile("csv", "test_CSV.csv")
-		io.Copy(ff, file)
+		ioWriter, _ := mpWriter.CreateFormFile("csv", "test_CSV.csv")
+		io.Copy(ioWriter, file)
 
-		writer.Close()
+		mpWriter.Close()
 		request := httptest.NewRequest(http.MethodPost, "/v1/companies/merge-all-companies", bytes.NewReader(body.Bytes()))
-		request.Header.Add("Content-Type", writer.FormDataContentType())
+		request.Header.Add("Content-Type", mpWriter.FormDataContentType())
 
 		response := httptest.NewRecorder()
 		companyHandler := NewCompanyHandler()
 		companyHandler.Register(companyService)
 
 		companyHandler.MergeCompanies(response, request)
-		if response.Result().StatusCode == http.StatusOK {
+		if response.Result().StatusCode != http.StatusOK {
 			t.Errorf(`got "%d", want error"`, response.Result().StatusCode)
 		}
 	})
