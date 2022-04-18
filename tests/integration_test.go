@@ -137,6 +137,7 @@ func TestIntegration(t *testing.T) {
 		if readCompany != emptyCompany {
 			t.Errorf("The request need a response, but got %s", readCompany)
 		}
+
 	})
 
 	t.Run("Closing server", func(t *testing.T) {

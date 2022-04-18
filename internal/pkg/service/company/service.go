@@ -16,6 +16,7 @@ type dbCompanyRepository interface {
 	ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error)
 	SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) (*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company entity.Companies) error
+	DeleteCompany(ctx context.Context, company entity.Companies) error
 }
 type csvCompanyRepository interface {
 	GetCompany(ctx context.Context, key string) ([]*entity.Companies, error)
@@ -82,16 +83,9 @@ func (s *CompanyService) InitializeDataBase(ctx context.Context, key string) err
 		for _, company := range companies {
 			company.ID = uuid.New()
 
-			CompanyNameIsValid, err := CheckNameValidity(company.Name)
-			if err != nil {
-				return fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_NAME, err)
-			}
-			CompanyZIPIsValid, err := CheckZipValidity(company.Zip)
-			if err != nil {
-				return fmt.Errorf("%v: %w", ERR_WHILE_MATCHING_ZIP, err)
-			}
+			ok, _ := CheckAllValidity(company)
 
-			if CompanyNameIsValid && CompanyZIPIsValid {
+			if ok {
 				company.ID = uuid.New()
 				err = s.dbRepository.AddCompany(ctx, *company)
 

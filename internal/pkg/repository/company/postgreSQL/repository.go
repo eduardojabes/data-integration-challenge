@@ -87,6 +87,14 @@ func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company ent
 	return nil
 }
 
+func (r PostgreCompanyRepository) DeleteCompany(ctx context.Context, company entity.Companies) error {
+	_, err := r.conn.Exec(ctx, `DELETE FROM companies_catalog_table WHERE cc_name = $1`, company.ID)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (r *PostgreCompanyRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	var companyModel []*CompanyModel
 	company := []*entity.Companies{}

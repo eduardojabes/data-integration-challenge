@@ -16,41 +16,48 @@ type MockCompanyRepository struct {
 	SearchCompanyByNameAndZipMock func(ctx context.Context, name string, zip string) (*entity.Companies, error)
 	UpdateCompanyMock             func(ctx context.Context, company entity.Companies) error
 	GetCompanyMock                func(ctx context.Context, key string) ([]*entity.Companies, error)
+	DeleteCompanyMock             func(ctx context.Context, company entity.Companies) error
 }
 
 func (mcr *MockCompanyRepository) AddCompany(ctx context.Context, company entity.Companies) error {
 	if mcr.AddCompanyMock != nil {
 		return mcr.AddCompanyMock(ctx, company)
 	}
-	return errors.New("GetCodeFileMock must be set")
+	return errors.New("AddCompanyMock must be set")
 }
 
 func (mcr *MockCompanyRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
 	if mcr.ReadCompanyByNameMock != nil {
 		return mcr.ReadCompanyByNameMock(ctx, name)
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("ReadCompanyByNameMock must be set")
 }
 
 func (mcr *MockCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {
 	if mcr.UpdateCompanyMock != nil {
 		return mcr.UpdateCompanyMock(ctx, company)
 	}
-	return errors.New("GetCodeFileMock must be set")
+	return errors.New("UpdateCompanyMock must be set")
 }
 
 func (mcr *MockCompanyRepository) GetCompany(ctx context.Context, key string) ([]*entity.Companies, error) {
 	if mcr.GetCompanyMock != nil {
 		return mcr.GetCompanyMock(ctx, key)
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("GetCompanyMock must be set")
 }
 
 func (mcr *MockCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) (*entity.Companies, error) {
 	if mcr.SearchCompanyByNameAndZipMock != nil {
 		return mcr.SearchCompanyByNameAndZipMock(ctx, name, zip)
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("SearchCompanyByNameAndZipMock must be set")
+}
+func (mcr *MockCompanyRepository) DeleteCompany(ctx context.Context, company entity.Companies) error {
+	if mcr.DeleteCompanyMock != nil {
+		return mcr.DeleteCompanyMock(ctx, company)
+	}
+	return errors.New("DeleteCompanyMock must be set")
 }
 
 type MockCsvCompanyRepository struct {
@@ -61,7 +68,7 @@ func (mcsvr *MockCsvCompanyRepository) GetCompany(ctx context.Context, key strin
 	if mcsvr.GetCompanyMock != nil {
 		return mcsvr.GetCompanyMock(ctx, key)
 	}
-	return nil, errors.New("GetCodeFileMock must be set")
+	return nil, errors.New("GetCompanyMock must be set")
 }
 
 func TestCheckNameValidity(t *testing.T) {

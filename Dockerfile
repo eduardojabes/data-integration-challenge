@@ -9,7 +9,7 @@ RUN mkdir /
 ADD . /
 
 WORKDIR /
-RUN go build cmd/
+RUN go build cmd/main.go
 ENTRYPOINT ./
 
 EXPOSE 5000
