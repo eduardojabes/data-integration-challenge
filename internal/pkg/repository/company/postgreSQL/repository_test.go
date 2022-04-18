@@ -1,8 +1,11 @@
 package company
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -10,6 +13,23 @@ import (
 	"github.com/google/uuid"
 	"github.com/pashagolub/pgxmock"
 )
+
+func CreatTestFile(data string) string {
+	file, _ := ioutil.TempFile("./", "test_file_*.csv")
+
+	buffer := &bytes.Buffer{}
+	buffer.WriteString(data)
+
+	file.Write(buffer.Bytes())
+
+	if _, err := file.Seek(0, os.SEEK_SET); err != nil {
+		panic(err)
+	}
+
+	file.Close()
+
+	return file.Name()
+}
 
 func TestAddCompany(t *testing.T) {
 	mock, _ := pgxmock.NewConn()

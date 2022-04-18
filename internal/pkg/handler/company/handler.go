@@ -2,7 +2,6 @@ package company
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -20,6 +19,7 @@ type CompanyService interface {
 	AddCompany(ctx context.Context, company *entity.Companies) error
 	GetCompanies() ([]entity.Companies, error)
 	FindByNameAndZip(name string, zip string) (*entity.Companies, error)
+	FindByName(name string) (*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company *entity.Companies) error
 }
 
@@ -48,11 +48,7 @@ func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 
 	w.WriteHeader(status)
 
-	if bytes.Compare(response, []byte("null")) != 0 {
-		w.Write([]byte(response))
-	} else {
-		w.Write([]byte("{}"))
-	}
+	w.Write([]byte(response))
 }
 
 //RespondError makes the error response with payload as json format
@@ -67,6 +63,20 @@ func (c *CompanyHandler) GetCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondJSON(w, http.StatusOK, companies)
+	return
+}
+
+//GetCompanyByNameAndZip GET /v1/companies?name={value} application/json
+func (c *CompanyHandler) GetCompanyByName(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+
+	companies, err := c.service.FindByName(name)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	RespondJSON(w, http.StatusOK, companies)
+
 	return
 }
 
@@ -129,7 +139,6 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 
 	file, _, err := r.FormFile("csv")
 	if err != nil {
-		log.Fatalln("Error MergeCompany", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -80,11 +80,9 @@ func TestIntegration(t *testing.T) {
 	httpConector := routes.NewHandler()
 	httpConector.ImplementConnector(companyService)
 
-	path := "./data/q1_catalog.csv"
+	path := "q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
 
-	//path = "./data/q2_clientData.csv"
-	//companyService.UpdateDataBaseFromCSV(ctx, path)
 	router := httpConector.NewRouter()
 
 	log.Print("The server has started")

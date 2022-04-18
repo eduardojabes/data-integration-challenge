@@ -201,6 +201,11 @@ func (s *CompanyService) FindByNameAndZip(name string, zip string) (*entity.Comp
 	return companies, err
 }
 
+func (s *CompanyService) FindByName(name string) (*entity.Companies, error) {
+	companies, err := s.dbRepository.ReadCompanyByName(context.Background(), name)
+	return companies, err
+}
+
 func NewCompanyService(dbRepository CompanyRepository, csvRepository csvCompanyRepository) *CompanyService {
 	return &CompanyService{
 		dbRepository:  dbRepository,
