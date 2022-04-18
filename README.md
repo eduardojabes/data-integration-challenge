@@ -70,13 +70,19 @@ CSV format:
 | Name | Address Zip | Website |
 | ------ | ------ | ------ |
 | TOLA SALES GROUP | 78229 | http://repsources.com |
+=======
+| Create company | /v1/companies | POST | application/json | Create a new company.|
+| Merge companies with CSV | /v1/companies/merge-all-companies | POST | multipart/form-data | Parses a valid CSV file and integrate its in the actual database. If the will be discarded if ir doesn't exist. The key of the file must be named "csv".|
+
 
 ## Setup
 
 First, you need to have docker and docker-compose installed. The instructions can be found [here](https://docs.docker.com/install/)
 
+
 You need to have Goose installed too for the SQL table migrations. The instructions can be found [here](https://github.com/pressly/goose#install)
 
+=======
 ## Container
 
 To run the application execute:
@@ -91,6 +97,12 @@ The second command will construct the table used in this application with the mi
 On first time the application will load data in **q1_catalog.csv**
 
 ## Tests
+=======
+docker-compose up -d
+```
+On first time the application will load data in **q1_catalog.csv**
+
+### Tests
 
 To perform tests with go, run from project root:
 
@@ -101,6 +113,8 @@ go test ./...
 When executing tests, on integrations tests the project will merge data with **q2_clientData**
 
 All the queries expected for the server will be tested too
+
+=======
 
 # Data integration challenge
 
