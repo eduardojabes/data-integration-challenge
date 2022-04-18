@@ -40,7 +40,7 @@ func (r *PostgreCompanyRepository) AddCompany(ctx context.Context, company entit
 
 func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name string) (*entity.Companies, error) {
 	var company []*CompanyModel
-	err := pgxscan.Select(ctx, r.conn, &company, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name = $1`, name)
+	err := pgxscan.Select(ctx, r.conn, &company, `SELECT * FROM companies_catalog_table WHERE cc_name = $1`, name)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}
@@ -57,13 +57,12 @@ func (r *PostgreCompanyRepository) ReadCompanyByName(ctx context.Context, name s
 	}, nil
 }
 
-func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) ([]*entity.Companies, error) {
+func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context, name string, zip string) (*entity.Companies, error) {
 	var companyModel []*CompanyModel
-	company := []*entity.Companies{}
 
 	pattern := fmt.Sprintf("%s%s%s", "%", name, "%")
 
-	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT cc_company_id FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
+	err := pgxscan.Select(ctx, r.conn, &companyModel, `SELECT * FROM companies_catalog_table WHERE cc_name LIKE $1 AND cc_zip = $2`, pattern, zip)
 	if err != nil {
 		return nil, fmt.Errorf("error while executing query: %w", err)
 	}
@@ -71,16 +70,13 @@ func (r *PostgreCompanyRepository) SearchCompanyByNameAndZip(ctx context.Context
 	if len(companyModel) == 0 {
 		return nil, nil
 	}
+	return &entity.Companies{
+		ID:      companyModel[0].CompanyID,
+		Name:    companyModel[0].ComapanyName,
+		Zip:     companyModel[0].CompanyZIP,
+		Website: companyModel[0].CompanyWebSite,
+	}, nil
 
-	for index := range companyModel {
-		company = append(company, &entity.Companies{
-			ID:      companyModel[index].CompanyID,
-			Name:    companyModel[index].ComapanyName,
-			Zip:     companyModel[index].CompanyZIP,
-			Website: companyModel[index].CompanyWebSite,
-		})
-	}
-	return company, nil
 }
 
 func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company entity.Companies) error {

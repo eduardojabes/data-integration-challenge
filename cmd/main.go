@@ -38,13 +38,10 @@ func main() {
 	path := "./data/q1_catalog.csv"
 	companyService.InitializeDataBase(ctx, path)
 
-	//path = "./data/q2_clientData.csv"
-	//companyService.UpdateDataBaseFromCSV(ctx, path)
-
 	router := httpConector.NewRouter()
 
 	log.Print("The server has started")
-	server := &http.Server{Addr: ":8080", Handler: router}
+	server := &http.Server{Addr: ":5000", Handler: router}
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {

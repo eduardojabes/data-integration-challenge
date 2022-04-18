@@ -16,6 +16,61 @@ After start up, the API will be avaible listening port 5000 for following endpoi
 | ------ | ------ | ------ | ------ | ------ |
 | List all companies| /v1/companies | GET | application/json | Retrieve all companies stored in the database. |
 | Search company by name and zip | /v1/companies/search?name={value}&zip={value} | GET | application/json | Provides companies informations based on query parameters values. Company name can be part of the company's name but zip needs to be the entire zip code of the company|
+| Create company | /v1/companies | POST | application/json | Create a new company. [here](#post-v1companies)|
+| Merge companies with CSV | /v1/companies/merge-all-companies | POST | multipart/form-data | Parses a valid CSV file and integrate its in the actual database. If the will be discarded if ir doesn't exist. The key of the file must be named "csv". See example [here](#post-v1companiesmerge)|
+
+### GET /v1/companies
+
+Response body:
+
+    [{
+        "ID": "5e6ab36fe5574a0006e920e7",
+        "name":"TOLA SALES GROUP",
+        "zip":"78229",
+        "website":"http://repsources.com"
+    }, ...]
+
+### GET /v1/companies/search
+
+Example: /v1/companies/search?name=TOLA&zip=78229
+
+Response body:
+
+    {
+        "ID":"5e6ab36fe5574a0006e920e7",
+        "name":"TOLA SALES GROUP",
+        "zip":"78229",
+        "website":"http://repsources.com"
+    }
+
+Example: /v1/companies/search?name=TOLA
+
+Response body:
+
+    {
+        "ID":"5e6ab36fe5574a0006e920e7",
+        "name":"TOLA SALES GROUP",
+        "zip":"78229",
+        "website":"http://repsources.com"
+    }
+
+### POST /v1/companies
+
+Request body:
+
+    {
+        "name": "TOLA SALES GROUP",
+        "zipCode": "78229"        
+    }
+
+### POST /v1/companies/merge
+
+CSV format:
+    
+| Name | Address Zip | Website |
+| ------ | ------ | ------ |
+| TOLA SALES GROUP | 78229 | http://repsources.com |
+=======
 | Create company | /v1/companies | POST | application/json | Create a new company.|
 | Merge companies with CSV | /v1/companies/merge-all-companies | POST | multipart/form-data | Parses a valid CSV file and integrate its in the actual database. If the will be discarded if ir doesn't exist. The key of the file must be named "csv".|
 
@@ -24,11 +79,25 @@ After start up, the API will be avaible listening port 5000 for following endpoi
 
 First, you need to have docker and docker-compose installed. The instructions can be found [here](https://docs.docker.com/install/)
 
+
+You need to have Goose installed too for the SQL table migrations. The instructions can be found [here](https://github.com/pressly/goose#install)
+
+=======
 ## Container
 
 To run the application execute:
 
 ```sh
+$ docker-compose up -d
+$ make
+```
+The first command will build the PostgreSQL database.
+The second command will construct the table used in this application with the migrations configurations
+
+On first time the application will load data in **q1_catalog.csv**
+
+## Tests
+=======
 docker-compose up -d
 ```
 On first time the application will load data in **q1_catalog.csv**
@@ -40,6 +109,12 @@ To perform tests with go, run from project root:
 ```sh
 go test ./...
 ```
+
+When executing tests, on integrations tests the project will merge data with **q2_clientData**
+
+All the queries expected for the server will be tested too
+
+=======
 
 # Data integration challenge
 

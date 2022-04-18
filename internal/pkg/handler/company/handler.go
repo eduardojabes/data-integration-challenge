@@ -2,10 +2,10 @@ package company
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"log"
@@ -13,20 +13,13 @@ import (
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
-	"github.com/google/uuid"
 )
-
-type Companies struct {
-	ID      uuid.UUID `json:"id"`
-	Name    string    `json:"name"`
-	Zip     string    `json:"zipCode"`
-	Website string    `json:"website"`
-}
 
 type CompanyService interface {
 	AddCompany(ctx context.Context, company *entity.Companies) error
 	GetCompanies() ([]entity.Companies, error)
-	FindByNameAndZip(name string, zip string) ([]entity.Companies, error)
+	FindByNameAndZip(name string, zip string) (*entity.Companies, error)
+	FindByName(name string) (*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company *entity.Companies) error
 }
 
@@ -55,11 +48,7 @@ func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 
 	w.WriteHeader(status)
 
-	if bytes.Compare(response, []byte("null")) != 0 {
-		w.Write([]byte(response))
-	} else {
-		w.Write([]byte("{}"))
-	}
+	w.Write([]byte(response))
 }
 
 //RespondError makes the error response with payload as json format
@@ -74,6 +63,20 @@ func (c *CompanyHandler) GetCompanies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	RespondJSON(w, http.StatusOK, companies)
+	return
+}
+
+//GetCompanyByNameAndZip GET /v1/companies?name={value} application/json
+func (c *CompanyHandler) GetCompanyByName(w http.ResponseWriter, r *http.Request) {
+	name := r.URL.Query().Get("name")
+
+	companies, err := c.service.FindByName(name)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	RespondJSON(w, http.StatusOK, companies)
+
 	return
 }
 
@@ -131,11 +134,11 @@ func (c *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 
 //MergeCompanies POST /v1/companies multipart/form-data
 func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) {
+	ERR_COMPANY_NOT_EXISTS := errors.New("Erro: there is no company with this name")
 	ctx := context.Background()
 
 	file, _, err := r.FormFile("csv")
 	if err != nil {
-		log.Fatalln("Error MergeCompany", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -146,12 +149,10 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 	data, err := csvreader.ReadAll()
 
 	if err != nil {
-		log.Fatalln("Error MergeCompany", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	if len(data) == 0 {
-		log.Fatalln("Empty file")
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -159,12 +160,13 @@ func (c *CompanyHandler) MergeCompanies(w http.ResponseWriter, r *http.Request) 
 	companyData := csvRepository.CreateCompanyEntityByCSV(ctx, data)
 	for _, company := range companyData {
 		err = c.service.UpdateCompany(ctx, company)
-		if err != nil {
-			log.Fatalln("Error UpdatingCompany", err)
+
+		if err != nil && errors.Is(err, ERR_COMPANY_NOT_EXISTS) {
+			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 	return
 }
