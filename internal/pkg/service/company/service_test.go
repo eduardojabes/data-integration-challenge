@@ -354,13 +354,16 @@ func TestAddCompany(t *testing.T) {
 		company := &entity.Companies{
 			ID:      uuid.New(),
 			Name:    "Company",
-			Zip:     "12345",
+			Zip:     "12346",
 			Website: "http://www.company.com",
 		}
 
 		dbRepository := &MockCompanyRepository{
 			AddCompanyMock: func(ctx context.Context, company entity.Companies) error {
 				return nil
+			},
+			SearchCompanyByNameAndZipMock: func(ctx context.Context, name, zip string) (*entity.Companies, error) {
+				return nil, nil
 			},
 		}
 

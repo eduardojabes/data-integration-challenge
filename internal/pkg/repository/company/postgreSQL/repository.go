@@ -88,7 +88,7 @@ func (r PostgreCompanyRepository) UpdateCompany(ctx context.Context, company ent
 }
 
 func (r PostgreCompanyRepository) DeleteCompany(ctx context.Context, company entity.Companies) error {
-	_, err := r.conn.Exec(ctx, `DELETE FROM companies_catalog_table WHERE cc_name = $1`, company.ID)
+	_, err := r.conn.Exec(ctx, `DELETE FROM companies_catalog_table WHERE cc_company_id = $1`, company.ID)
 	if err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ type MockCompanyService struct {
 	FindByNameAndZipMock func(name string, zip string) (*entity.Companies, error)
 	FindByNameMock       func(name string) (*entity.Companies, error)
 	UpdateCompanyMock    func(ctx context.Context, company *entity.Companies) error
+	DeleteCompanyMock    func(ctx context.Context, entity entity.Companies) error
 }
 
 func (mcs *MockCompanyService) GetCompanies() ([]entity.Companies, error) {
@@ -52,6 +53,12 @@ func (mcs *MockCompanyService) FindByName(name string) (*entity.Companies, error
 		return mcs.FindByNameMock(name)
 	}
 	return nil, errors.New("FindByNameMock")
+}
+func (mcs *MockCompanyService) DeleteCompany(ctx context.Context, entity entity.Companies) error {
+	if mcs.DeleteCompanyMock != nil {
+		return mcs.DeleteCompanyMock(ctx, entity)
+	}
+	return errors.New("DeleteCompanyMock")
 }
 
 func (mcs *MockCompanyService) UpdateCompany(ctx context.Context, company *entity.Companies) error {

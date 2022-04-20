@@ -52,6 +52,7 @@ func RESTMergeCompaniesWithCSV() (*http.Response, error) {
 func RESTSearchIntegrationTest(nameForSearch string, zipForSearch string) (*http.Response, entity.Companies, error) {
 	dummyIO := []byte{}
 	queryURL := fmt.Sprintf("http://localhost:5000/v1/companies/search?name=%s&zip=%s", nameForSearch, zipForSearch)
+	fmt.Printf("%s\n", queryURL)
 	request, _ := http.NewRequest(http.MethodGet, queryURL, bytes.NewBuffer(dummyIO))
 
 	client := http.Client{}
@@ -61,9 +62,20 @@ func RESTSearchIntegrationTest(nameForSearch string, zipForSearch string) (*http
 	body, _ := ioutil.ReadAll(io.LimitReader(response.Body, 128*1024*8)) //128kb
 
 	err = json.Unmarshal(body, &readCompany)
-
 	return response, readCompany, err
 }
+
+func CreateCompanyIntegrationTest(company entity.Companies) (*http.Response, error) {
+	companyJSON, _ := json.Marshal(company)
+
+	request, _ := http.NewRequest(http.MethodPost, "http://localhost:5000/v1/companies", bytes.NewBuffer(companyJSON))
+
+	client := http.Client{}
+	response, err := client.Do(request)
+
+	return response, err
+}
+
 func TestIntegration(t *testing.T) {
 	ctx, _ := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	ctx, cancel := context.WithCancel(ctx)
@@ -138,6 +150,32 @@ func TestIntegration(t *testing.T) {
 			t.Errorf("The request need a response, but got %s", readCompany)
 		}
 
+	})
+	t.Run("Creating Company", func(t *testing.T) {
+		company := entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://newwebsite.com"}
+		response, err := CreateCompanyIntegrationTest(company)
+
+		if response.StatusCode != http.StatusCreated {
+			t.Errorf("error creating company: got: %d, want: %d", response.StatusCode, http.StatusOK)
+		}
+		if err != nil {
+			t.Errorf("got: %d, want: nil", err)
+		}
+	})
+
+	t.Run("Error while Creating Company by having the company", func(t *testing.T) {
+		company := entity.Companies{Name: "New Company Test", Zip: "12345", Website: "http://newwebsite.com"}
+		response, err := CreateCompanyIntegrationTest(company)
+
+		if response.StatusCode != http.StatusBadRequest {
+			t.Errorf("error creating company: got: %d, want: %d", response.StatusCode, http.StatusBadRequest)
+		}
+		if err != nil {
+			t.Errorf("got: %d, want: nil", err)
+		}
+
+		_, readCompany, _ := RESTSearchIntegrationTest("Company", "12345")
+		companyService.DeleteCompany(ctx, readCompany)
 	})
 
 	t.Run("Closing server", func(t *testing.T) {

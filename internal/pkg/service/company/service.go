@@ -34,6 +34,7 @@ type CompanyService struct {
 
 var (
 	ERR_COMPANY_NOT_EXISTS      = errors.New("Erro: there is no company with this name")
+	ERR_COMPANY_EXISTS          = errors.New("Erro: there is a company with this name")
 	ERR_WHILE_MATCHING_NAME     = errors.New("Error while matching company Name")
 	ERR_WHILE_MATCHING_ZIP      = errors.New("Error while matching company ZIP")
 	ERR_WHILE_WRITING           = errors.New("Error while writing company")
@@ -135,6 +136,18 @@ func CheckAllValidity(company *entity.Companies) (bool, error) {
 
 func (s *CompanyService) AddCompany(ctx context.Context, company *entity.Companies) error {
 	company.Name = strings.ToUpper(company.Name)
+
+	//fmt.Printf("service.go ID: %s, name: %s, zip: %s, webmail:%s\n", company.ID, company.Name, company.Zip, company.Website)
+	readCompany, err := s.dbRepository.SearchCompanyByNameAndZip(ctx, company.Name, company.Zip)
+	if err != nil {
+		err = fmt.Errorf("%v: %w", ERR_WHILE_GETTING_COMPANIES, err)
+		return err
+	}
+
+	if readCompany != nil {
+		return ERR_COMPANY_EXISTS
+	}
+
 	ok, err := CheckAllValidity(company)
 
 	if !ok {
@@ -176,6 +189,14 @@ func (s *CompanyService) UpdateCompany(ctx context.Context, company *entity.Comp
 
 	if err != nil {
 		err = fmt.Errorf("%v: %w", ERR_WHILE_WRITING, err)
+		return err
+	}
+	return nil
+}
+
+func (s *CompanyService) DeleteCompany(ctx context.Context, entity entity.Companies) error {
+	err := s.dbRepository.DeleteCompany(ctx, entity)
+	if err != nil {
 		return err
 	}
 	return nil

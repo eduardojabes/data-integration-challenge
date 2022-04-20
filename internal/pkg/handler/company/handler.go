@@ -6,10 +6,11 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"strings"
 
 	"github.com/eduardojabes/data-integration-challenge/entity"
 	csvRepository "github.com/eduardojabes/data-integration-challenge/internal/pkg/repository/company/csv"
@@ -21,6 +22,7 @@ type CompanyService interface {
 	FindByNameAndZip(name string, zip string) (*entity.Companies, error)
 	FindByName(name string) (*entity.Companies, error)
 	UpdateCompany(ctx context.Context, company *entity.Companies) error
+	DeleteCompany(ctx context.Context, entity entity.Companies) error
 }
 
 type CompanyHandler struct {
@@ -70,6 +72,8 @@ func (c *CompanyHandler) GetCompanies(w http.ResponseWriter, r *http.Request) {
 func (c *CompanyHandler) GetCompanyByName(w http.ResponseWriter, r *http.Request) {
 	name := r.URL.Query().Get("name")
 
+	name = strings.ToUpper(name)
+
 	companies, err := c.service.FindByName(name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -85,7 +89,10 @@ func (c *CompanyHandler) GetCompanyByNameAndZip(w http.ResponseWriter, r *http.R
 	name := r.URL.Query().Get("name")
 	zip := r.URL.Query().Get("zip")
 
+	name = strings.ToUpper(name)
+	fmt.Printf(name)
 	companies, err := c.service.FindByNameAndZip(name, zip)
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -101,24 +108,23 @@ func (c *CompanyHandler) CreateCompany(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(io.LimitReader(r.Body, 128*1024*8)) //128kb
 
 	if err != nil {
-		log.Fatal("Failed to add company")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	if err := r.Body.Close(); err != nil {
-		log.Fatal("Failed to add company")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	if err := json.Unmarshal(body, &company); err != nil {
 		w.WriteHeader(422)
 		if err := json.NewEncoder(w).Encode(err); err != nil {
-			log.Fatalln("Error AddCompany unmarshalling data", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 	}
-
+	//fmt.Printf("handler.go ID: %s, name: %s, zip: %s, webmail:%s\n", company.ID, company.Name, company.Zip, company.Website)
 	result := c.service.AddCompany(context.Background(), &company)
 
 	if result != nil {
